@@ -71,34 +71,42 @@ void Display::setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* masse
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vboPos);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, vboVel);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, vboMass);
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, NULL);
+}
+
+void Display::registerCUDA()
+{
+	cudaGraphicsGLRegisterBuffer(&cudaResources[0], vboPos, cudaGraphicsMapFlagsNone);
+	cudaGraphicsGLRegisterBuffer(&cudaResources[1], vboVel, cudaGraphicsMapFlagsNone);
+	cudaGraphicsGLRegisterBuffer(&cudaResources[2], vboMass, cudaGraphicsMapFlagsNone);
 }
 
 void Display::getCUDAVBOPointers(float3** pos, float3** vel, float** mass)
 {
-	cudaGraphicsGLRegisterBuffer(&cudavboPosRes, vboPos, cudaGraphicsMapFlagsNone);
-	cudaGraphicsMapResources(1, &cudavboPosRes, 0);
+	cudaGraphicsMapResources(3, cudaResources, 0);
 
-	cudaGraphicsGLRegisterBuffer(&cudavboVelRes, vboVel, cudaGraphicsMapFlagsNone);
-	cudaGraphicsMapResources(1, &cudavboVelRes, 0);
-
-	cudaGraphicsGLRegisterBuffer(&cudavboMassRes, vboMass, cudaGraphicsMapFlagsNone);
-	cudaGraphicsMapResources(1, &cudavboMassRes, 0);
-
-	cudaGraphicsResourceGetMappedPointer((void**)pos, &(posBytes), cudavboPosRes);
-	cudaGraphicsResourceGetMappedPointer((void**)vel, &(velBytes), cudavboVelRes);
-	cudaGraphicsResourceGetMappedPointer((void**)mass, &(massBytes), cudavboMassRes);
+	cudaGraphicsResourceGetMappedPointer((void**)pos, &(posBytes), cudaResources[0]);
+	cudaGraphicsResourceGetMappedPointer((void**)vel, &(velBytes), cudaResources[1]);
+	cudaGraphicsResourceGetMappedPointer((void**)mass, &(massBytes), cudaResources[2]);
 }
 
 void Display::unmapCUDARES()
 {
-	cudaGraphicsUnmapResources(1, &cudavboPosRes, 0);
-	cudaGraphicsUnregisterResource(cudavboPosRes);
+	cudaGraphicsUnmapResources(3, cudaResources, 0);
+}
 
-	cudaGraphicsUnmapResources(1, &cudavboVelRes, 0);
-	cudaGraphicsUnregisterResource(cudavboVelRes);
-
-	cudaGraphicsUnmapResources(1, &cudavboMassRes, 0);
-	cudaGraphicsUnregisterResource(cudavboMassRes);
+void Display::unregisterCUDA()
+{
+	cudaGraphicsUnregisterResource(cudaResources[0]);
+	cudaGraphicsUnregisterResource(cudaResources[1]);
+	cudaGraphicsUnregisterResource(cudaResources[2]);
 }
 
 void Display::initShaders()

@@ -17,10 +17,13 @@ public:
 	void initShaders();
 	void setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* masses ,unsigned int numPoints);
 
+	void registerCUDA();
 
 	void getCUDAVBOPointers(float3** pos, float3** vel, float** mass);
-
 	void unmapCUDARES();
+
+	void unregisterCUDA();
+
 	void displayFrame();
 
 	~Display(void);
@@ -41,10 +44,8 @@ private:
 	size_t posBytes;
 	size_t velBytes;
 	size_t massBytes;
-
-	cudaGraphicsResource_t cudavboPosRes;
-	cudaGraphicsResource_t cudavboVelRes;
-	cudaGraphicsResource_t cudavboMassRes;
+	
+	cudaGraphicsResource_t cudaResources[3];
 };
 
 #endif

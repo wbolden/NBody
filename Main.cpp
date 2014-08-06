@@ -40,6 +40,8 @@ int main()
 	float3* v = 0;
 	float* m = 0;
 
+	display.registerCUDA();
+
 	while(true)
 	{
 		display.getCUDAVBOPointers(&p, &v, &m);
@@ -48,6 +50,8 @@ int main()
 
 		display.displayFrame();
 	}
+
+	display.unregisterCUDA();
 
 	return 0;
 }
