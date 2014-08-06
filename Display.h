@@ -14,7 +14,10 @@ class Display
 {
 public:
 	Display(int width, int height);
-	void resizeWindow(GLFWwindow* window);
+	void initShaders();
+	void setVertexData(GLfloat* points, unsigned int length);
+	float3* getCUDAVBOPointer();
+	void unmapCUDARES();
 	void displayFrame();
 
 	~Display(void);
@@ -26,6 +29,10 @@ private:
 	GLuint vbo;
 	GLuint vao;
 	GLuint shaderProgram;
+
+	int numVerts;
+
+	cudaGraphicsResource_t cudavboRes;
 };
 
 #endif

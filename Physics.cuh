@@ -1,6 +1,6 @@
 #ifndef PHYSICS_CUH
 #define PHYSICS_CUH
 
-void test(float3* devVerts);
+void runPhysics(float3* devVerts);
 
 #endif

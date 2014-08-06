@@ -24,11 +24,13 @@ char* loadShader(const char* filename)
 }
 
 
-
 Display::Display(int width, int height)
 {
 	this->width = width;
 	this->height = height;
+	numVerts = 0;
+	vbo = 0;
+	vao = 0;
 
 	glfwInit();
 
@@ -37,47 +39,50 @@ Display::Display(int width, int height)
 	window = glfwCreateWindow(width, height, "NBody Simulation", NULL, NULL);
 	glfwMakeContextCurrent(window);
 
-
-
-
-
 	glewExperimental = GL_TRUE;
 	glewInit();
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+}
 
-	GLfloat points[] = 
-	{
-		0.0f, 0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f
-	};
-
-	vbo = 0;
+void Display::setVertexData(GLfloat* points, unsigned int numVerts)
+{
+	this->numVerts = numVerts;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-
-	vao = 0;
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*numVerts*3, points, GL_DYNAMIC_DRAW);
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+}
 
+float3* Display::getCUDAVBOPointer()
+{
+	float3* cudavbo = 0;
 
+	cudaGraphicsGLRegisterBuffer(&cudavboRes, vbo, cudaGraphicsMapFlagsNone);
+	cudaGraphicsMapResources(1, &cudavboRes, 0);
 
+	size_t numBytes = numVerts*sizeof(GLfloat)*3;
 
+	cudaGraphicsResourceGetMappedPointer((void**)&cudavbo, &(numBytes), cudavboRes);
+	return cudavbo;
+}
 
+void Display::unmapCUDARES()
+{
+	cudaGraphicsUnmapResources(1, &cudavboRes, 0);
+	cudaGraphicsUnregisterResource(cudavboRes);
+}
+
+void Display::initShaders()
+{
 	char* vshader = loadShader("vert.glsl");
-
-//	printf("%s\n", vshader);	
-
 	char* fshader = loadShader("frag.glsl");
-
-//	printf("%s\n", fshader);
 
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vs, 1, (const GLchar**)&vshader, NULL);
@@ -91,30 +96,15 @@ Display::Display(int width, int height)
 	glAttachShader(shaderProgram, fs);
 	glAttachShader(shaderProgram, vs);
 	glLinkProgram(shaderProgram);
-
 }
 
 void Display::displayFrame()
 {
-/*
-
-	glPointSize(3.0f);
-	glColor4f(1, 1, 1, 1);
-
-	glBegin(GL_POINTS);
-
-	for(int i = -10; i < 10; i++)
-	{
-		glVertex3f(i*0.4, i*0.3, i*0.2);
-	}
-
-	glEnd();
-*/
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgram);
 	glBindVertexArray(vao);
 
-	glDrawArrays(GL_POINTS, 0, 3);
+	glDrawArrays(GL_POINTS, 0, numVerts);
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();

@@ -10,7 +10,7 @@ __global__ void cutest(float3* verts)
 
 }
 
-void test(float3* devVerts)
+void runPhysics(float3* devVerts)
 {
 
 	cutest<<<1, 3>>>(devVerts);

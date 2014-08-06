@@ -19,7 +19,7 @@ INCLUDES := -I$(CUDAPATH)/include -I$(GLPATH)
 
 all: $(PROJECTNAME)
 
-$(PROJECTNAME): Main.o Display.o
+$(PROJECTNAME): Main.o Display.o Physics.o
 	$(NVCC) $(NVCCLINKFLAGS) -o $@ $^ $(LIBPATH) $(CUDALIBPATH) $(LIBS)
 
 %.o: %.cpp
