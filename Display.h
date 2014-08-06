@@ -15,8 +15,11 @@ class Display
 public:
 	Display(int width, int height);
 	void initShaders();
-	void setVertexData(GLfloat* points, unsigned int length);
-	float3* getCUDAVBOPointer();
+	void setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* masses ,unsigned int numPoints);
+
+
+	void getCUDAVBOPointers(float3** pos, float3** vel, float** mass);
+
 	void unmapCUDARES();
 	void displayFrame();
 
@@ -26,13 +29,22 @@ private:
 	GLFWwindow* window;
 	int width, height;
 	
-	GLuint vbo;
+	GLuint vboPos;
+	GLuint vboVel;
+	GLuint vboMass;
+
 	GLuint vao;
 	GLuint shaderProgram;
 
-	int numVerts;
+	int numPoints;
 
-	cudaGraphicsResource_t cudavboRes;
+	size_t posBytes;
+	size_t velBytes;
+	size_t massBytes;
+
+	cudaGraphicsResource_t cudavboPosRes;
+	cudaGraphicsResource_t cudavboVelRes;
+	cudaGraphicsResource_t cudavboMassRes;
 };
 
 #endif

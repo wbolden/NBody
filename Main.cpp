@@ -20,13 +20,30 @@ int main()
 		-0.5f, -0.5f, 0.0f
 	};
 
-	display.setVertexData(points, 3);
+	GLfloat vels[] =
+	{
 
+		0.0f, 0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		-0.5f, -0.5f, 0.0f
+	};
+
+
+	GLfloat masses[] =
+	{	
+		0.6f, 0.5f, 0.3f
+	};
+
+	display.setVertexData(points, vels, masses, 3);
+
+	float3* p = 0;
+	float3* v = 0;
+	float* m = 0;
 
 	while(true)
 	{
-
-		runPhysics(display.getCUDAVBOPointer());
+		display.getCUDAVBOPointers(&p, &v, &m);
+		runPhysics(p, v, m);
 		display.unmapCUDARES();
 
 		display.displayFrame();

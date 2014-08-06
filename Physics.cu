@@ -1,17 +1,26 @@
+#include "MathUtils.cuh"
 #include <cstdio>
 
-__global__ void cutest(float3* verts)
+
+__device__ float force()
 {
-	int x = threadIdx.x;
-
-	//printf("%f\n%f\n%f\n\n", verts[x].x,  verts[x].y,  verts[x].z);
-
-	verts[x].x -= 0.0001f;
 
 }
 
-void runPhysics(float3* devVerts)
+__global__ void cutest(float3* pos, float3* vel, float* mass)
+{
+	int x = threadIdx.x;
+/*
+	printf("pos: %f, %f, %f\n\n", pos[x].x,  pos[x].y,  pos[x].z);
+	printf("vel: %f, %f, %f\n\n", vel[x].x,  vel[x].y,  vel[x].z);
+	printf("mass: %f\n\n", mass[x]);
+*/
+	//verts[x].x -= 0.0001f;
+
+}
+
+void runPhysics(float3* devPos, float3* devVel, float* devMass)
 {
 
-	cutest<<<1, 3>>>(devVerts);
+	cutest<<<1, 3>>>(devPos, devVel, devMass);
 }

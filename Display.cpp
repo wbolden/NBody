@@ -28,8 +28,7 @@ Display::Display(int width, int height)
 {
 	this->width = width;
 	this->height = height;
-	numVerts = 0;
-	vbo = 0;
+	numPoints = 0;
 	vao = 0;
 
 	glfwInit();
@@ -46,37 +45,60 @@ Display::Display(int width, int height)
 	glDepthFunc(GL_LESS);
 }
 
-void Display::setVertexData(GLfloat* points, unsigned int numVerts)
+void Display::setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* masses ,unsigned int numPoints)
 {
-	this->numVerts = numVerts;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*numVerts*3, points, GL_DYNAMIC_DRAW);
+	this->numPoints = numPoints;
+
+	posBytes = sizeof(GLfloat)*numPoints*3;
+	velBytes = sizeof(GLfloat)*numPoints*3;
+	massBytes = sizeof(GLfloat)*numPoints*1;
+
+	glGenBuffers(1, &vboPos);
+	glBindBuffer(GL_ARRAY_BUFFER, vboPos);
+	glBufferData(GL_ARRAY_BUFFER, posBytes, points, GL_DYNAMIC_DRAW);
+
+	glGenBuffers(1, &vboVel);
+	glBindBuffer(GL_ARRAY_BUFFER, vboVel);
+	glBufferData(GL_ARRAY_BUFFER, velBytes, velocities, GL_DYNAMIC_DRAW);
+
+	glGenBuffers(1, &vboMass);
+	glBindBuffer(GL_ARRAY_BUFFER, vboMass);
+	glBufferData(GL_ARRAY_BUFFER, massBytes, masses, GL_DYNAMIC_DRAW);
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vboPos);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 }
 
-float3* Display::getCUDAVBOPointer()
+void Display::getCUDAVBOPointers(float3** pos, float3** vel, float** mass)
 {
-	float3* cudavbo = 0;
+	cudaGraphicsGLRegisterBuffer(&cudavboPosRes, vboPos, cudaGraphicsMapFlagsNone);
+	cudaGraphicsMapResources(1, &cudavboPosRes, 0);
 
-	cudaGraphicsGLRegisterBuffer(&cudavboRes, vbo, cudaGraphicsMapFlagsNone);
-	cudaGraphicsMapResources(1, &cudavboRes, 0);
+	cudaGraphicsGLRegisterBuffer(&cudavboVelRes, vboVel, cudaGraphicsMapFlagsNone);
+	cudaGraphicsMapResources(1, &cudavboVelRes, 0);
 
-	size_t numBytes = numVerts*sizeof(GLfloat)*3;
+	cudaGraphicsGLRegisterBuffer(&cudavboMassRes, vboMass, cudaGraphicsMapFlagsNone);
+	cudaGraphicsMapResources(1, &cudavboMassRes, 0);
 
-	cudaGraphicsResourceGetMappedPointer((void**)&cudavbo, &(numBytes), cudavboRes);
-	return cudavbo;
+	cudaGraphicsResourceGetMappedPointer((void**)pos, &(posBytes), cudavboPosRes);
+	cudaGraphicsResourceGetMappedPointer((void**)vel, &(velBytes), cudavboVelRes);
+	cudaGraphicsResourceGetMappedPointer((void**)mass, &(massBytes), cudavboMassRes);
 }
 
 void Display::unmapCUDARES()
 {
-	cudaGraphicsUnmapResources(1, &cudavboRes, 0);
-	cudaGraphicsUnregisterResource(cudavboRes);
+	cudaGraphicsUnmapResources(1, &cudavboPosRes, 0);
+	cudaGraphicsUnregisterResource(cudavboPosRes);
+
+	cudaGraphicsUnmapResources(1, &cudavboVelRes, 0);
+	cudaGraphicsUnregisterResource(cudavboVelRes);
+
+	cudaGraphicsUnmapResources(1, &cudavboMassRes, 0);
+	cudaGraphicsUnregisterResource(cudavboMassRes);
 }
 
 void Display::initShaders()
@@ -104,7 +126,7 @@ void Display::displayFrame()
 	glUseProgram(shaderProgram);
 	glBindVertexArray(vao);
 
-	glDrawArrays(GL_POINTS, 0, numVerts);
+	glDrawArrays(GL_POINTS, 0, numPoints);
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
