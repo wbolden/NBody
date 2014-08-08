@@ -2,6 +2,14 @@
 #include <cuda_gl_interop.h>
 #include <fstream>
 
+static void handleInput(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if(key == GLFW_KEY_ESCAPE)
+	{
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
+}
+
 char* loadShader(const char* filename)
 {
 	std::ifstream file;
@@ -37,6 +45,8 @@ Display::Display(int width, int height)
 
 	window = glfwCreateWindow(width, height, "NBody Simulation", NULL, NULL);
 	glfwMakeContextCurrent(window);
+
+	glfwSetKeyCallback(window, handleInput);
 
 	glewExperimental = GL_TRUE;
 	glewInit();
@@ -88,7 +98,7 @@ void Display::registerCUDA()
 	cudaGraphicsGLRegisterBuffer(&cudaResources[2], vboMass, cudaGraphicsMapFlagsNone);
 }
 
-void Display::getCUDAVBOPointers(float3** pos, float3** vel, float** mass)
+void Display::getDevicePointers(float3** pos, float3** vel, float** mass)
 {
 	cudaGraphicsMapResources(3, cudaResources, 0);
 
@@ -97,7 +107,7 @@ void Display::getCUDAVBOPointers(float3** pos, float3** vel, float** mass)
 	cudaGraphicsResourceGetMappedPointer((void**)mass, &(massBytes), cudaResources[2]);
 }
 
-void Display::unmapCUDARES()
+void Display::unmapCUDAResources()
 {
 	cudaGraphicsUnmapResources(3, cudaResources, 0);
 }
@@ -126,12 +136,25 @@ void Display::initShaders()
 	glAttachShader(shaderProgram, fs);
 	glAttachShader(shaderProgram, vs);
 	glLinkProgram(shaderProgram);
+
+	matrix = new float[16] 
+	{
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.0f, 0.0f, 1.0f
+	};
+
 }
 
-void Display::displayFrame()
+void Display::render()
 {
+
+	int matloc = glGetUniformLocation(shaderProgram, "matrix");
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgram);
+	glUniformMatrix4fv(matloc, 1, GL_FALSE, matrix);
 	glBindVertexArray(vao);
 
 	glDrawArrays(GL_POINTS, 0, numPoints);
@@ -140,9 +163,13 @@ void Display::displayFrame()
 	glfwPollEvents();
 }
 
+bool Display::running()
+{
+	return !glfwWindowShouldClose(window);
+}
+
 Display::~Display(void)
 {
-	printf("called\n");
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }

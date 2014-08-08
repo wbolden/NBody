@@ -23,9 +23,9 @@ int main()
 	GLfloat vels[] =
 	{
 
-		0.0f, 0.5f, 0.0f,
+		0.0f, 0.5f, 0.9f,
 		0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f
+		0.5f, -0.5f, 0.0f
 	};
 
 
@@ -42,13 +42,13 @@ int main()
 
 	display.registerCUDA();
 
-	while(true)
+	while(display.running()) 
 	{
-		display.getCUDAVBOPointers(&p, &v, &m);
+		display.getDevicePointers(&p, &v, &m);
 		runPhysics(p, v, m);
-		display.unmapCUDARES();
+		display.unmapCUDAResources();
 
-		display.displayFrame();
+		display.render();
 	}
 
 	display.unregisterCUDA();

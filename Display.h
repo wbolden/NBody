@@ -19,12 +19,14 @@ public:
 
 	void registerCUDA();
 
-	void getCUDAVBOPointers(float3** pos, float3** vel, float** mass);
-	void unmapCUDARES();
+	void getDevicePointers(float3** pos, float3** vel, float** mass);
+	void unmapCUDAResources();
 
 	void unregisterCUDA();
 
-	void displayFrame();
+	bool running();
+
+	void render();
 
 	~Display(void);
 
@@ -44,7 +46,9 @@ private:
 	size_t posBytes;
 	size_t velBytes;
 	size_t massBytes;
-	
+
+	float* matrix;
+
 	cudaGraphicsResource_t cudaResources[3];
 };
 
