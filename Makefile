@@ -28,6 +28,6 @@ $(PROJECTNAME): Main.o Display.o Physics.o
 %.o: %.cu
 	$(NVCC) $(NVCCFLAGS) -c $(INCLUDES) $<
 
-.PHONY clean:
+clean:
 	sudo rm *.o
 	sudo rm $(PROJECTNAME)

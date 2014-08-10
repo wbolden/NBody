@@ -10,6 +10,10 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 class Display
 {
 public:
@@ -31,6 +35,11 @@ public:
 	~Display(void);
 
 private:
+	void handleInput();
+	bool pressed(int key);
+	void moveForeward(float ammount);
+	void moveRight(float ammount);
+
 	GLFWwindow* window;
 	int width, height;
 	
@@ -50,6 +59,12 @@ private:
 	float* matrix;
 
 	cudaGraphicsResource_t cudaResources[3];
+
+
+	glm::vec3 pos;
+	glm::vec3 rot;
+
 };
+
 
 #endif

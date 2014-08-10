@@ -2,12 +2,117 @@
 #include <cuda_gl_interop.h>
 #include <fstream>
 
-static void handleKeyInput(GLFWwindow* window, int key, int scancode, int action, int mods)
+#define ONED 0.01745329f
+
+//glm::vec3 pos;
+//glm::vec3 rot;
+
+static void keyInputHandler(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	if(key == GLFW_KEY_ESCAPE)
+/*
+	switch (key)
+	{
+		case GLFW_KEY_RIGHT:
+			rot.x += 0.5;
+			break;
+		case GLFW_KEY_LEFT:
+			rot.x -= 0.5;
+			break;
+		case GLFW_KEY_UP:
+			rot.y += 0.5;
+			break;
+		case GLFW_KEY_DOWN:
+			rot.y -= 0.5;
+			break;
+
+		case GLFW_KEY_W:
+			pos.z += 0.05;
+			break;
+		case GLFW_KEY_S:
+			pos.z -= 0.05;
+			break;
+		case GLFW_KEY_A:
+			pos.x += 0.05;
+			break;
+		case GLFW_KEY_D:
+			pos.x -= 0.05;
+			break;
+
+		default:
+			break;
+	}
+	*/
+}
+
+bool Display::pressed(int key)
+{
+	return glfwGetKey(window, key);
+}
+
+void Display::moveForeward(float ammount)
+{
+	float rotxr = rot.x*ONED;
+	float rotyr = rot.y*ONED;
+
+	pos.x += -ammount*sinf(rotxr)*cosf(rotyr);
+	pos.y += -ammount*sinf(rotyr);
+	pos.z += ammount*cosf(rotxr)*cosf(rotyr);
+}
+
+
+void Display::moveRight(float ammount)
+{
+
+	float rotxr = rot.x*ONED;
+
+	pos.x += ammount*cosf(rotxr);
+	pos.z += ammount*sinf(rotxr);
+}
+
+
+void Display::handleInput()
+{
+	if(pressed(GLFW_KEY_ESCAPE))
 	{
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
+
+	if(pressed(GLFW_KEY_W))
+	{
+		moveForeward(0.005f);
+	}
+	if(pressed(GLFW_KEY_S))
+	{
+		moveForeward(-0.005f);
+	}
+	if(pressed(GLFW_KEY_A))
+	{
+		moveRight(0.005f);
+	}
+	if(pressed(GLFW_KEY_D))
+	{
+		moveRight(-0.005f);
+	}
+
+
+	if(pressed(GLFW_KEY_UP))
+	{
+		rot.y += 0.05f;
+	}
+	if(pressed(GLFW_KEY_DOWN))
+	{
+		rot.y -= 0.05f;
+	}
+	if(pressed(GLFW_KEY_RIGHT))
+	{
+		rot.x += 0.05f;
+	}
+	if(pressed(GLFW_KEY_LEFT))
+	{
+		rot.x -= 0.05f;
+	}
+
+
 }
 
 char* loadShader(const char* filename)
@@ -39,6 +144,9 @@ Display::Display(int width, int height)
 	numPoints = 0;
 	vao = 0;
 
+	pos = glm::vec3(0, 0, 0);
+	rot = glm::vec3(0, 0, 0);
+
 	glfwInit();
 
 	glfwWindowHint(GLFW_SAMPLES, 16);
@@ -46,13 +154,14 @@ Display::Display(int width, int height)
 	window = glfwCreateWindow(width, height, "NBody Simulation", NULL, NULL);
 	glfwMakeContextCurrent(window);
 
-	glfwSetKeyCallback(window, handleInput);
+	glfwSetKeyCallback(window, keyInputHandler);
 
 	glewExperimental = GL_TRUE;
 	glewInit();
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+
 }
 
 void Display::setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* masses ,unsigned int numPoints)
@@ -147,17 +256,31 @@ void Display::initShaders()
 
 }
 
+
 void Display::render()
 {
+	handleInput();
 
-	int matloc = glGetUniformLocation(shaderProgram, "matrix");
+	glm::mat4 proj = glm::perspective(70.0f, (float)width/(float)height, 0.1f, 1000.0f);
+	glm::mat4 view = glm::mat4(1.0f);
+	
+	view = glm::rotate(view, rot.y, glm::vec3(-1.0f, 0.0f, 0.0f));
+	view = glm::rotate(view, rot.x, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	view = glm::translate(view, pos);
+
+	int projMatrixLocation = glGetUniformLocation(shaderProgram, "proj");
+	int viewMatrixLocation = glGetUniformLocation(shaderProgram, "view");
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgram);
-	glUniformMatrix4fv(matloc, 1, GL_FALSE, matrix);
+
+	glUniformMatrix4fv(projMatrixLocation, 1, GL_FALSE, glm::value_ptr(proj));
+	glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, glm::value_ptr(view));
+
 	glBindVertexArray(vao);
 
-	glDrawArrays(GL_POINTS, 0, numPoints);
+	glDrawArrays(GL_TRIANGLES, 0, numPoints);
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
