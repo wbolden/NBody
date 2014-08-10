@@ -11,8 +11,8 @@ bool Display::pressed(int key)
 
 void Display::moveForeward(float ammount)
 {
-	float rotxr = rot.x*ONED;
-	float rotyr = rot.y*ONED;
+	float rotxr = rot.x;
+	float rotyr = rot.y;
 
 	pos.x += -ammount*sinf(rotxr)*cosf(rotyr);
 	pos.y += -ammount*sinf(rotyr);
@@ -22,7 +22,7 @@ void Display::moveForeward(float ammount)
 
 void Display::moveRight(float ammount)
 {
-	float rotxr = rot.x*ONED;
+	float rotxr = rot.x;
 
 	pos.x += ammount*cosf(rotxr);
 	pos.z += ammount*sinf(rotxr);
@@ -31,6 +31,13 @@ void Display::moveRight(float ammount)
 
 void Display::handleInput()
 {
+	float moveSpeed = 0.05f;
+
+	if(pressed(GLFW_MOD_SHIFT))
+	{
+		moveSpeed *= 10;
+	}
+
 	if(pressed(GLFW_KEY_ESCAPE))
 	{
 		glfwSetWindowShouldClose(window, GL_TRUE);
@@ -38,37 +45,37 @@ void Display::handleInput()
 
 	if(pressed(GLFW_KEY_W))
 	{
-		moveForeward(0.005f);
+		moveForeward(moveSpeed);
 	}
 	if(pressed(GLFW_KEY_S))
 	{
-		moveForeward(-0.005f);
+		moveForeward(-moveSpeed);
 	}
 	if(pressed(GLFW_KEY_A))
 	{
-		moveRight(0.005f);
+		moveRight(moveSpeed);
 	}
 	if(pressed(GLFW_KEY_D))
 	{
-		moveRight(-0.005f);
+		moveRight(-moveSpeed);
 	}
 
 
 	if(pressed(GLFW_KEY_UP))
 	{
-		rot.y += 0.05f;
+		rot.y += 0.05f*ONED;
 	}
 	if(pressed(GLFW_KEY_DOWN))
 	{
-		rot.y -= 0.05f;
+		rot.y -= 0.05f*ONED;
 	}
 	if(pressed(GLFW_KEY_RIGHT))
 	{
-		rot.x += 0.05f;
+		rot.x += 0.05f*ONED;
 	}
 	if(pressed(GLFW_KEY_LEFT))
 	{
-		rot.x -= 0.05f;
+		rot.x -= 0.05f*ONED;
 	}
 
 
@@ -103,8 +110,8 @@ Display::Display(int width, int height)
 	numPoints = 0;
 	vao = 0;
 
-	pos = glm::vec3(0, 0, 0);
-	rot = glm::vec3(0, 0, 0);
+	pos = glm::vec3(0.0f, 0.0f, -2.0f);
+	rot = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	glfwInit();
 
@@ -121,12 +128,13 @@ Display::Display(int width, int height)
 
 }
 
-void Display::setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* masses ,unsigned int numPoints)
+void Display::setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* accelerations, GLfloat* masses ,unsigned int numPoints)
 {
 	this->numPoints = numPoints;
 
 	posBytes = sizeof(GLfloat)*numPoints*3;
 	velBytes = sizeof(GLfloat)*numPoints*3;
+	accBytes = sizeof(GLfloat)*numPoints*3;
 	massBytes = sizeof(GLfloat)*numPoints*1;
 
 	glGenBuffers(1, &vboPos);
@@ -136,6 +144,10 @@ void Display::setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* masse
 	glGenBuffers(1, &vboVel);
 	glBindBuffer(GL_ARRAY_BUFFER, vboVel);
 	glBufferData(GL_ARRAY_BUFFER, velBytes, velocities, GL_DYNAMIC_DRAW);
+
+	glGenBuffers(1, &vboAcc);
+	glBindBuffer(GL_ARRAY_BUFFER, vboAcc);
+	glBufferData(GL_ARRAY_BUFFER, accBytes, accelerations, GL_DYNAMIC_DRAW);
 
 	glGenBuffers(1, &vboMass);
 	glBindBuffer(GL_ARRAY_BUFFER, vboMass);
@@ -153,29 +165,41 @@ void Display::setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* masse
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, vboAcc);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glEnableVertexAttribArray(3);
 	glBindBuffer(GL_ARRAY_BUFFER, vboMass);
-	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, NULL);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 0, NULL);
 }
 
 void Display::registerCUDA()
 {
 	cudaGraphicsGLRegisterBuffer(&cudaResources[0], vboPos, cudaGraphicsMapFlagsNone);
 	cudaGraphicsGLRegisterBuffer(&cudaResources[1], vboVel, cudaGraphicsMapFlagsNone);
-	cudaGraphicsGLRegisterBuffer(&cudaResources[2], vboMass, cudaGraphicsMapFlagsNone);
+	cudaGraphicsGLRegisterBuffer(&cudaResources[2], vboAcc, cudaGraphicsMapFlagsNone);
+	cudaGraphicsGLRegisterBuffer(&cudaResources[3], vboMass, cudaGraphicsMapFlagsNone);	
 }
 
-void Display::getDevicePointers(float3** pos, float3** vel, float** mass)
+void Display::getDevicePointers(float3** pos, float3** vel, float3** acc, float** mass)
 {
-	cudaGraphicsMapResources(3, cudaResources, 0);
+	cudaGraphicsMapResources(4, cudaResources, 0);
 
 	cudaGraphicsResourceGetMappedPointer((void**)pos, &(posBytes), cudaResources[0]);
 	cudaGraphicsResourceGetMappedPointer((void**)vel, &(velBytes), cudaResources[1]);
-	cudaGraphicsResourceGetMappedPointer((void**)mass, &(massBytes), cudaResources[2]);
+	cudaGraphicsResourceGetMappedPointer((void**)acc, &(accBytes), cudaResources[2]);
+	cudaGraphicsResourceGetMappedPointer((void**)mass, &(massBytes), cudaResources[3]);
+}
+
+
+int Display::getNumPoints()
+{
+	return numPoints;
 }
 
 void Display::unmapCUDAResources()
 {
-	cudaGraphicsUnmapResources(3, cudaResources, 0);
+	cudaGraphicsUnmapResources(4, cudaResources, 0);
 }
 
 void Display::unregisterCUDA()
@@ -183,6 +207,7 @@ void Display::unregisterCUDA()
 	cudaGraphicsUnregisterResource(cudaResources[0]);
 	cudaGraphicsUnregisterResource(cudaResources[1]);
 	cudaGraphicsUnregisterResource(cudaResources[2]);
+	cudaGraphicsUnregisterResource(cudaResources[3]);
 }
 
 void Display::initShaders()
@@ -202,14 +227,6 @@ void Display::initShaders()
 	glAttachShader(shaderProgram, fs);
 	glAttachShader(shaderProgram, vs);
 	glLinkProgram(shaderProgram);
-
-	matrix = new float[16] 
-	{
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, 0.0f, 0.0f, 1.0f
-	};
 
 }
 

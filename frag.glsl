@@ -2,6 +2,7 @@
 
 out vec4 fragColor;
 
+in vec3 col;
 
 void main()
 {
