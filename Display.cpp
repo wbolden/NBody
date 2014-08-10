@@ -4,46 +4,6 @@
 
 #define ONED 0.01745329f
 
-//glm::vec3 pos;
-//glm::vec3 rot;
-
-static void keyInputHandler(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-/*
-	switch (key)
-	{
-		case GLFW_KEY_RIGHT:
-			rot.x += 0.5;
-			break;
-		case GLFW_KEY_LEFT:
-			rot.x -= 0.5;
-			break;
-		case GLFW_KEY_UP:
-			rot.y += 0.5;
-			break;
-		case GLFW_KEY_DOWN:
-			rot.y -= 0.5;
-			break;
-
-		case GLFW_KEY_W:
-			pos.z += 0.05;
-			break;
-		case GLFW_KEY_S:
-			pos.z -= 0.05;
-			break;
-		case GLFW_KEY_A:
-			pos.x += 0.05;
-			break;
-		case GLFW_KEY_D:
-			pos.x -= 0.05;
-			break;
-
-		default:
-			break;
-	}
-	*/
-}
-
 bool Display::pressed(int key)
 {
 	return glfwGetKey(window, key);
@@ -62,7 +22,6 @@ void Display::moveForeward(float ammount)
 
 void Display::moveRight(float ammount)
 {
-
 	float rotxr = rot.x*ONED;
 
 	pos.x += ammount*cosf(rotxr);
@@ -153,8 +112,6 @@ Display::Display(int width, int height)
 
 	window = glfwCreateWindow(width, height, "NBody Simulation", NULL, NULL);
 	glfwMakeContextCurrent(window);
-
-	glfwSetKeyCallback(window, keyInputHandler);
 
 	glewExperimental = GL_TRUE;
 	glewInit();
@@ -266,21 +223,20 @@ void Display::render()
 	
 	view = glm::rotate(view, rot.y, glm::vec3(-1.0f, 0.0f, 0.0f));
 	view = glm::rotate(view, rot.x, glm::vec3(0.0f, 1.0f, 0.0f));
-
 	view = glm::translate(view, pos);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glUseProgram(shaderProgram);
 
 	int projMatrixLocation = glGetUniformLocation(shaderProgram, "proj");
 	int viewMatrixLocation = glGetUniformLocation(shaderProgram, "view");
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(shaderProgram);
-
 	glUniformMatrix4fv(projMatrixLocation, 1, GL_FALSE, glm::value_ptr(proj));
 	glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, glm::value_ptr(view));
 
 	glBindVertexArray(vao);
 
-	glDrawArrays(GL_TRIANGLES, 0, numPoints);
+	glDrawArrays(GL_POINTS, 0, numPoints);
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
