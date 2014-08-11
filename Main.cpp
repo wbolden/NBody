@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "Physics.cuh"
+#include "Timer.h"
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -16,7 +17,7 @@ int main()
 
 	int num = 16384*2;
 
-	//num = 1 >> 15;
+	
 
 	size_t size = num * sizeof(GLfloat) * 3;
 
@@ -34,7 +35,7 @@ int main()
 		int z = i*3 +2;
 
 		points[i*3] = (float)(rand() % 1000) / 100.0f -5.0f;
-		points[i*3+1] = (float)(rand() % 1000) / 1000.0f -5.0f;
+		points[i*3+1] = (float)(rand() % 1000) / 100.0f -5.0f;
 		points[i*3+2] = (float)(rand() % 1000) / 100.0f -5.0f;
 
 
@@ -90,13 +91,22 @@ int main()
 
 	display.registerCUDA();
 
+	Timer timer = Timer(); 
+
 	while(display.running()) 
 	{
-		display.getDevicePointers(&p, &v, &a, &m);
-		runPhysics(p, v, a, m, display.getNumPoints());
-		display.unmapCUDAResources();
+		timer.start();
 
+		if(!display.paused())
+		{
+			display.getDevicePointers(&p, &v, &a, &m);
+			runPhysics(p, v, a, m, display.getNumPoints());
+			display.unmapCUDAResources();
+		}
 		display.render();
+
+		timer.stop();
+		printf("%f\n", timer.getElapsed());
 	}
 
 	display.unregisterCUDA();

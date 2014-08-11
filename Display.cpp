@@ -91,6 +91,13 @@ void Display::handleInput()
 	{
 		color = 0;
 	}
+	pause = false;
+
+	if(pressed(GLFW_KEY_SPACE))
+	{
+		pause = true;
+	}
+
 
 
 }
@@ -124,6 +131,7 @@ Display::Display(int width, int height)
 	numPoints = 0;
 	vao = 0;
 	color = 0;
+	pause = false;
 
 	pos = glm::vec3(0.0f, 0.0f, -2.0f);
 	rot = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -143,6 +151,11 @@ Display::Display(int width, int height)
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
+}
+
+bool Display::paused()
+{
+	return pause;
 }
 
 void Display::setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* accelerations, GLfloat* masses ,unsigned int numPoints)

@@ -40,20 +40,14 @@ inline __device__ float magnitude(float3& i)
 	return sqrtf(i.x*i.x + i.y*i.y + i.z*i.z);
 }
 
-inline __device__ float fmagnitude(float3& i)
+inline __device__ float dot(float3& i)
 {
-	return __fsqrt_rn(__fmaf_rn(i.x, i.x, __fmaf_rn(i.y, i.y, __fmul_rn(i.z, i.z))));
+	return i.x*i.x + i.y*i.y + i.z*i.z;
 }
 
 inline __device__ float imagnitude(float3& i)
 {
 	return rsqrtf(i.x*i.x + i.y*i.y + i.z*i.z);
 }
-
-inline __device__ float ifmagnitude(float3& i)
-{
-	return rsqrtf(__fmaf_rn(i.x, i.x, __fmaf_rn(i.y, i.y, __fmul_rn(i.z, i.z))));
-}
-
 
 #endif

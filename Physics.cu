@@ -3,9 +3,10 @@
 
 #define G 0.0000000000667f //Nm^2/kg^2
 #define EP 0.005f
+#define EPS EP*EP
 #define TIMESTEP 0.01f
 
-__global__ void allPairsAcceleration(float3* pos, float3* acc, float* mass, int numPoints)
+__global__ void allPairsNoEP(float3* pos, float3* acc, float* mass, int numPoints, float3* vel)
 {
 	extern __shared__ float4 bodyInfo[];
 
@@ -28,42 +29,59 @@ __global__ void allPairsAcceleration(float3* pos, float3* acc, float* mass, int 
 				if(i != tile * blockDim.x + j)
 				{
 					float3 r_ij = bodyInfo[j] - posi;
-					float magr = fmagnitude(r_ij);
+					float magr = imagnitude(r_ij);
 
-					a_i = a_i + __powf(magr*magr + EP*EP, -3.0f/2.0f) * r_ij * bodyInfo[j].w;
+					a_i = a_i + rsqrtf(magr*magr*magr) * bodyInfo[j].w * r_ij;
 				}
 			}
 			__syncthreads();
 		}
 		acc[i] = a_i * G;
 
+		vel[i] = vel[i] + acc[i] * TIMESTEP;
+		pos[i] = pos[i] + vel[i] * TIMESTEP;
 	}
+}
 
 
+__global__ void allPairsNormal(float3* pos, float3* acc, float* mass, int numPoints, float3* vel)
+{
+	extern __shared__ float4 bodyInfo[];
 
-	/*
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+
 	if(i < numPoints)
 	{
 		float3 a_i = make_float3(0, 0, 0); //Net acceleration on object i
-
 		float3 posi = pos[i];
 
-		for(int j = 0; j < numPoints; j++)
+		for(int tile = 0; tile < gridDim.x; tile++)
 		{
-			if(j != i)
+			int localIndex = tile * blockDim.x + threadIdx.x;
+
+			bodyInfo[threadIdx.x] = make_float4(pos[localIndex].x, pos[localIndex].y, pos[localIndex].z, mass[localIndex]);
+			__syncthreads();
+
+			for(int j = 0; j < blockDim.x; j++)
 			{
-				float3 r_ij = pos[j] - posi;
-				float magr = fmagnitude(r_ij);
+				if(i != tile * blockDim.x + j)
+				{	
+					float3 r_ij = bodyInfo[j] - posi;
 
-				a_i = a_i + __powf(magr*magr + EP*EP, -3.0f/2.0f) * r_ij * mass[j];
+					float dotr = dot(r_ij) + EPS;
+
+					a_i = a_i + rsqrtf(dotr*dotr*dotr) * bodyInfo[j].w * r_ij;
+				}
 			}
+			__syncthreads();
 		}
-
 		acc[i] = a_i * G;
+
+		vel[i] = vel[i] + acc[i] * TIMESTEP;
+		pos[i] = pos[i] + vel[i] * TIMESTEP;
 	}
-	*/
-	
 }
+
 
 __global__ void integrateEuler(float3* pos, float3* vel, float3* acc, int numPoints)
 {
@@ -82,8 +100,8 @@ void runPhysics(float3* devPos, float3* devVel, float3* devAcc, float* devMass, 
 	dim3 gridSize = dim3((numPoints+blockSize.x-1)/blockSize.x);
 	int smem = sizeof(float4)*blockSize.x;
 
-	allPairsAcceleration<<<gridSize, blockSize, smem>>>(devPos, devAcc, devMass, numPoints);
+	allPairsNormal<<<gridSize, blockSize, smem>>>(devPos, devAcc, devMass, numPoints, devVel);
 
-	integrateEuler<<<gridSize, blockSize>>>(devPos, devVel, devAcc, numPoints);
+//	integrateEuler<<<gridSize, blockSize>>>(devPos, devVel, devAcc, numPoints);
 
 }

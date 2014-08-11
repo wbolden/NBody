@@ -30,7 +30,7 @@ public:
 	void unregisterCUDA();
 
 	bool running();
-
+	bool paused();
 	void render();
 
 	~Display(void);
@@ -65,6 +65,7 @@ private:
 	glm::vec3 rot;
 
 	GLint color;
+	bool pause;
 
 };
 
