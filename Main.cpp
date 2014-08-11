@@ -4,8 +4,8 @@
 #include <time.h>
 #include "Physics.cuh"
 
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1280
+#define HEIGHT 720
 
 
 int main()
@@ -14,7 +14,10 @@ int main()
 	Display display = Display(WIDTH, HEIGHT);
 	display.initShaders();
 
-	int num = 1000;
+	int num = 16384*2;
+
+	//num = 1 >> 15;
+
 	size_t size = num * sizeof(GLfloat) * 3;
 
 	GLfloat* points = (GLfloat*) malloc(size);
@@ -26,52 +29,58 @@ int main()
 
 	for(int i = 0; i < num; i++)
 	{
+		int x = i*3;
+		int y = i*3 +1;
+		int z = i*3 +2;
+
 		points[i*3] = (float)(rand() % 1000) / 100.0f -5.0f;
-		points[i*3+1] = (float)(rand() % 100) / 100.0f -5.0f;
+		points[i*3+1] = (float)(rand() % 1000) / 1000.0f -5.0f;
 		points[i*3+2] = (float)(rand() % 1000) / 100.0f -5.0f;
+
+
+	//	points[i*3+1] = 0;
 
 		vels[i*3] = 0;
 		vels[i*3+1] = 0;
 		vels[i*3+2] = 0;
 
-		masses[i] = 100000.0f +  rand()%10000000;
+		if(points[x] < 0)
+		{
+			if(points[z]< 0)
+			{
+				vels[x] ++;
+			}
+			else
+			{
+				vels[z] --;
+			}
+		}
+		else
+		{
+			if(points[z]< 0)
+			{
+				vels[z]++;
+			}
+			else
+			{
+				vels[x]--;
+			}
+
+		}
+
+		vels[x]/= 10.0f;
+		vels[z]/=10.0f;
+
+		masses[i] = 1000000.0f +  rand()%1000000;
 
 		//masses[i] = 10000000.0f + rand()  - rand();
 
 	}
 
-//	masses[32] = 900000000.0f;
 
 
 
-/*
-	GLfloat points[] = 
-	{
-		0.0f, 0.5f, -1.0f,
-		0.5f, -0.5f, -1.0f,
-		-0.5f, -0.5f, -1.0f
-	};
 
-	GLfloat vels[] =
-	{
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f
-	};
-
-	GLfloat accel[] =
-	{
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f
-	};
-
-
-	GLfloat masses[] =
-	{	
-		1000000.6f, 1000000.5f, 1000000.3f
-	};
-*/
 	display.setVertexData(points, vels, accel, masses, num);
 
 	float3* p = 0;

@@ -64,6 +64,8 @@ private:
 	glm::vec3 pos;
 	glm::vec3 rot;
 
+	GLint color;
+
 };
 
 

@@ -29,6 +29,12 @@ inline __device__ float3 operator-(const float3 &a,const float3 &b)
 }
 
 
+inline __device__ float3 operator-(const float4 &a,const float3 &b)
+{
+	return make_float3(a.x-b.x, a.y-b.y, a.z-b.z);
+}
+
+
 inline __device__ float magnitude(float3& i)
 {
 	return sqrtf(i.x*i.x + i.y*i.y + i.z*i.z);

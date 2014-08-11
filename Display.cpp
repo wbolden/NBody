@@ -32,6 +32,7 @@ void Display::moveRight(float ammount)
 void Display::handleInput()
 {
 	float moveSpeed = 0.05f;
+	float rotSpeed = 0.35f;
 
 	if(pressed(GLFW_MOD_SHIFT))
 	{
@@ -63,19 +64,32 @@ void Display::handleInput()
 
 	if(pressed(GLFW_KEY_UP))
 	{
-		rot.y += 0.05f*ONED;
+		rot.y += rotSpeed*ONED;
 	}
 	if(pressed(GLFW_KEY_DOWN))
 	{
-		rot.y -= 0.05f*ONED;
+		rot.y -= rotSpeed*ONED;
 	}
 	if(pressed(GLFW_KEY_RIGHT))
 	{
-		rot.x += 0.05f*ONED;
+		rot.x += rotSpeed*ONED;
 	}
 	if(pressed(GLFW_KEY_LEFT))
 	{
-		rot.x -= 0.05f*ONED;
+		rot.x -= rotSpeed*ONED;
+	}
+
+	if(pressed(GLFW_KEY_V))
+	{
+		color = 2;
+	}
+	if(pressed(GLFW_KEY_C))
+	{
+		color = 1;
+	}
+	if(pressed(GLFW_KEY_N))
+	{
+		color = 0;
 	}
 
 
@@ -109,6 +123,7 @@ Display::Display(int width, int height)
 	this->height = height;
 	numPoints = 0;
 	vao = 0;
+	color = 0;
 
 	pos = glm::vec3(0.0f, 0.0f, -2.0f);
 	rot = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -125,6 +140,8 @@ Display::Display(int width, int height)
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 }
 
@@ -250,6 +267,9 @@ void Display::render()
 	int viewMatrixLocation = glGetUniformLocation(shaderProgram, "view");
 	glUniformMatrix4fv(projMatrixLocation, 1, GL_FALSE, glm::value_ptr(proj));
 	glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, glm::value_ptr(view));
+
+	int colorMode = glGetUniformLocation(shaderProgram, "mode");
+	glUniform1i(colorMode, color);
 
 	glBindVertexArray(vao);
 
