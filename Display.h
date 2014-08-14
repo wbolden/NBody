@@ -66,6 +66,7 @@ private:
 
 	GLint color;
 	bool pause;
+	bool clear;
 
 };
 

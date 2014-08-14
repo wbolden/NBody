@@ -2,7 +2,7 @@
 #include <cstdio>
 
 #define G 0.0000000000667f //Nm^2/kg^2
-#define EP 0.005f
+#define EP 0.01f
 #define EPS EP*EP
 #define TIMESTEP 0.01f
 
@@ -99,7 +99,7 @@ void runPhysics(float3* devPos, float3* devVel, float3* devAcc, float* devMass, 
 	dim3 blockSize = dim3(512);
 	dim3 gridSize = dim3((numPoints+blockSize.x-1)/blockSize.x);
 	int smem = sizeof(float4)*blockSize.x;
-
+	//for(int i = 0; i < 100; i++)
 	allPairsNormal<<<gridSize, blockSize, smem>>>(devPos, devAcc, devMass, numPoints, devVel);
 
 //	integrateEuler<<<gridSize, blockSize>>>(devPos, devVel, devAcc, numPoints);

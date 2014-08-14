@@ -8,6 +8,10 @@
 #define WIDTH 1280
 #define HEIGHT 720
 
+#pragma comment(lib, "glew32.lib")
+#pragma comment(lib, "glu32.lib")
+#pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "glfw3.lib")
 
 int main()
 {
@@ -15,8 +19,8 @@ int main()
 	Display display = Display(WIDTH, HEIGHT);
 	display.initShaders();
 
-	int num = 16384*2;
-
+	int num = 1024*20;
+	//num = 1024;
 	
 
 	size_t size = num * sizeof(GLfloat) * 3;
@@ -34,9 +38,12 @@ int main()
 		int y = i*3 +1;
 		int z = i*3 +2;
 
-		points[i*3] = (float)(rand() % 1000) / 100.0f -5.0f;
-		points[i*3+1] = (float)(rand() % 1000) / 100.0f -5.0f;
-		points[i*3+2] = (float)(rand() % 1000) / 100.0f -5.0f;
+		points[x] = (float)(rand() % 10000) / 1000.0f -5.0f;
+		points[y] = (float)(rand() % 10000) / 1000.0f -5.0f;
+		points[z] = (float)(rand() % 10000) / 1000.0f -5.0f;
+
+		
+		points[y] = 0;
 
 
 	//	points[i*3+1] = 0;
@@ -44,39 +51,49 @@ int main()
 		vels[i*3] = 0;
 		vels[i*3+1] = 0;
 		vels[i*3+2] = 0;
-
+		
 		if(points[x] < 0)
 		{
 			if(points[z]< 0)
 			{
-				vels[x] ++;
+				points[x] +=10;
+				points[y] +=1;
 			}
 			else
 			{
-				vels[z] --;
+				points[z] -=19;
+				
+				points[y] +=2;
 			}
 		}
 		else
 		{
 			if(points[z]< 0)
 			{
-				vels[z]++;
+				points[z]+=10;
+				
+				points[y] +=3;
 			}
 			else
 			{
-				vels[x]--;
+				points[x]-=10;
+				
+				points[y] +=4;
 			}
 
 		}
+		
 
-		vels[x]/= 10.0f;
-		vels[z]/=10.0f;
+		vels[x]/= 100.0f;
+		vels[z]/=100.0f;
 
-		masses[i] = 1000000.0f +  rand()%1000000;
+		masses[i] = 1000000.0f;
 
 		//masses[i] = 10000000.0f + rand()  - rand();
 
 	}
+
+	//masses[0] = 1000000000.0f;
 
 
 

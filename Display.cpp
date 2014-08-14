@@ -4,6 +4,45 @@
 
 #define ONED 0.01745329f
 
+const char* defaultVShader = "#version 400 \n"
+"layout(location = 0) in vec3 pos;"
+"layout(location = 1) in vec3 vel;"
+"layout(location = 2) in vec3 acc;"
+"layout(location = 3) in float mass;"
+"uniform mat4 proj;"
+"uniform mat4 view;"
+"uniform int mode;"
+"out vec3 col;"
+"void main()"
+"{"
+"	if(mode == 0)"
+"	{"
+"		col.x = 1.0f;"
+"		col.y = 1.3f;"
+"		col.z = 1.3f;"
+"	}"
+"	else if(mode == 1)"
+"	{"
+"		col = abs(acc)*10*10;"
+"	}"
+"	else"
+"	{"
+"		col = abs(vel)*10;"
+"	}"
+"	gl_Position = proj * view * vec4(pos, 1.0f);"
+"	vec3 ndc = gl_Position.xyz/gl_Position.w;"
+"	gl_PointSize = (1.005f- ndc.z) * 100;"
+"}";
+
+const char* defaultFShader = "#version 400 \n"
+"out vec4 fragColor;"
+"in vec3 col;"
+"void main()"
+"{"
+"	fragColor = vec4(col, 1.0);"
+"}";
+
+
 bool Display::pressed(int key)
 {
 	return glfwGetKey(window, key);
@@ -29,10 +68,12 @@ void Display::moveRight(float ammount)
 }
 
 
+
 void Display::handleInput()
 {
 	float moveSpeed = 0.05f;
 	float rotSpeed = 0.35f;
+	clear = false;
 
 	if(pressed(GLFW_MOD_SHIFT))
 	{
@@ -98,7 +139,11 @@ void Display::handleInput()
 		pause = true;
 	}
 
-
+	clear = false;
+	if(pressed(GLFW_KEY_Y))
+	{
+		clear = true;
+	}
 
 }
 
@@ -132,8 +177,9 @@ Display::Display(int width, int height)
 	vao = 0;
 	color = 0;
 	pause = false;
+	clear = false;
 
-	pos = glm::vec3(0.0f, 0.0f, -2.0f);
+	pos = glm::vec3(0.0f, 0.0f, -5.0f);
 	rot = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	glfwInit();
@@ -219,6 +265,11 @@ void Display::getDevicePointers(float3** pos, float3** vel, float3** acc, float*
 	cudaGraphicsResourceGetMappedPointer((void**)vel, &(velBytes), cudaResources[1]);
 	cudaGraphicsResourceGetMappedPointer((void**)acc, &(accBytes), cudaResources[2]);
 	cudaGraphicsResourceGetMappedPointer((void**)mass, &(massBytes), cudaResources[3]);
+
+	if(clear)
+	{
+		cudaMemset(*vel, 0, velBytes);
+	}
 }
 
 
@@ -240,24 +291,44 @@ void Display::unregisterCUDA()
 	cudaGraphicsUnregisterResource(cudaResources[3]);
 }
 
+bool shaderCompiled(GLuint shader)
+{
+	GLint status;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	return (bool)status;
+}
+
+bool compileShader(GLuint shader, const GLchar* shaderSource)
+{
+	glShaderSource(shader, 1, &shaderSource, NULL);
+	glCompileShader(shader);
+
+	return shaderCompiled(shader);
+}
+
 void Display::initShaders()
 {
-	char* vshader = loadShader("vert.glsl");
-	char* fshader = loadShader("frag.glsl");
+	const char* vshader = loadShader("vert.glsl");
+	const char* fshader = loadShader("frag.glsl");
 
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vs, 1, (const GLchar**)&vshader, NULL);
-	glCompileShader(vs);
-
 	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fs, 1, (const GLchar**)&fshader, NULL);
-	glCompileShader(fs);
+
+	if(!compileShader(vs, (const GLchar*)vshader))
+	{
+		vshader = defaultVShader;
+		compileShader(vs, (const GLchar*)vshader);
+	}
+	if(!compileShader(fs, (const GLchar*)fshader))
+	{
+		fshader = defaultFShader;
+		compileShader(fs, (const GLchar*)fshader);
+	}
 
 	shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, fs);
 	glAttachShader(shaderProgram, vs);
 	glLinkProgram(shaderProgram);
-
 }
 
 
