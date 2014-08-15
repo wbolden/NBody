@@ -19,7 +19,7 @@ int main()
 	Display display = Display(WIDTH, HEIGHT);
 	display.initShaders();
 
-	int num = 1024*20;
+	int num = 1024*40;
 	//num = 1024;
 	
 
@@ -39,11 +39,11 @@ int main()
 		int z = i*3 +2;
 
 		points[x] = (float)(rand() % 10000) / 1000.0f -5.0f;
-		points[y] = (float)(rand() % 10000) / 1000.0f -5.0f;
+		points[y] = (float)(rand() % 10000) / 10000.0f -5.0f;
 		points[z] = (float)(rand() % 10000) / 1000.0f -5.0f;
 
 		
-		points[y] = 0;
+	//	points[y] = 0;
 
 
 	//	points[i*3+1] = 0;
@@ -52,18 +52,19 @@ int main()
 		vels[i*3+1] = 0;
 		vels[i*3+2] = 0;
 		
+		/*
 		if(points[x] < 0)
 		{
 			if(points[z]< 0)
 			{
 				points[x] +=10;
-				points[y] +=1;
+	//			points[y] +=1;
 			}
 			else
 			{
 				points[z] -=19;
 				
-				points[y] +=2;
+	//			points[y] +=2;
 			}
 		}
 		else
@@ -72,22 +73,22 @@ int main()
 			{
 				points[z]+=10;
 				
-				points[y] +=3;
+	//			points[y] +=3;
 			}
 			else
 			{
 				points[x]-=10;
 				
-				points[y] +=4;
+		//		points[y] +=4;
 			}
 
 		}
-		
+		*/
 
 		vels[x]/= 100.0f;
 		vels[z]/=100.0f;
 
-		masses[i] = 1000000.0f;
+		masses[i] = 100000.0f + (float)(rand() % 1000000);
 
 		//masses[i] = 10000000.0f + rand()  - rand();
 

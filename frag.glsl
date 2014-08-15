@@ -6,5 +6,10 @@ in vec3 col;
 
 void main()
 {
-	fragColor = vec4(col, 1.0);
+	float d = max(col.x, max(col.y, col.z));
+	if(d < 1.0f)
+	{
+		d = 1.0f;
+	}
+	fragColor = vec4(col/d, 1.0);
 }
