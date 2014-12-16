@@ -17,7 +17,7 @@
 class Display
 {
 public:
-	Display(int width, int height);
+	Display(int width, int height, bool fullscreen);
 	void initShaders();
 	void setVertexData(GLfloat* points, GLfloat* velocities, GLfloat* accelerations, GLfloat* masses ,unsigned int numPoints);
 

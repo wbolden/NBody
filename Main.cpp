@@ -7,6 +7,7 @@
 
 #define WIDTH 1280
 #define HEIGHT 720
+bool fullscreen = false;
 
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "glu32.lib")
@@ -16,7 +17,7 @@
 int main()
 {
 
-	Display display = Display(WIDTH, HEIGHT);
+	Display display = Display(WIDTH, HEIGHT, fullscreen);
 	display.initShaders();
 
 	int num = 1024*40;
@@ -118,7 +119,7 @@ int main()
 		if(!display.paused())
 		{
 			display.getDevicePointers(&p, &v, &a, &m);
-			runPhysics(p, v, a, m, display.getNumPoints());
+			runPhysics(p, v, a, m, display.getNumPoints(), true, 100.0f);
 			display.unmapCUDAResources();
 		}
 		display.render();

@@ -1,6 +1,9 @@
 #ifndef MATHUTILS_CUH
 #define MATHUTILS_CUH
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 
 inline __device__ float3 operator*(const float &b, const float3 &a)
 {

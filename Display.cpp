@@ -175,7 +175,7 @@ char* loadShader(const char* filename)
 }
 
 
-Display::Display(int width, int height)
+Display::Display(int width, int height, bool fullscreen)
 {
 	this->width = width;
 	this->height = height;
@@ -185,14 +185,21 @@ Display::Display(int width, int height)
 	pause = false;
 	clear = false;
 
-	pos = glm::vec3(0.0f, 0.0f, -5.0f);
+	pos = glm::vec3(0.0f, 1.0f, -5.0f);
 	rot = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	glfwInit();
 
 	glfwWindowHint(GLFW_SAMPLES, 16);
+	if(fullscreen)
+	{
+		window = glfwCreateWindow(width, height, "NBody Simulation", glfwGetPrimaryMonitor(), NULL);
+	}
+	else
+	{
+		window = glfwCreateWindow(width, height, "NBody Simulation", NULL, NULL);
+	}
 
-	window = glfwCreateWindow(width, height, "NBody Simulation", NULL, NULL);
 	glfwMakeContextCurrent(window);
 
 	glewExperimental = GL_TRUE;
@@ -342,12 +349,13 @@ void Display::render()
 {
 	handleInput();
 
-	glm::mat4 proj = glm::perspective(70.0f, (float)width/(float)height, 0.1f, 1000.0f);
+	glm::mat4 proj = glm::perspective(70.0f, (float)width/(float)height, 0.1f, 1000000.0f);
 	glm::mat4 view = glm::mat4(1.0f);
 	
 	view = glm::rotate(view, rot.y, glm::vec3(-1.0f, 0.0f, 0.0f));
 	view = glm::rotate(view, rot.x, glm::vec3(0.0f, 1.0f, 0.0f));
 	view = glm::translate(view, pos);
+
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
