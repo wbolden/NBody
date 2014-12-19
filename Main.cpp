@@ -119,7 +119,7 @@ int main()
 		if(!display.paused())
 		{
 			display.getDevicePointers(&p, &v, &a, &m);
-			runPhysics(p, v, a, m, display.getNumPoints(), true, 100.0f);
+			runPhysics(p, v, a, m, display.getNumPoints(), false, 1.0f);
 			display.unmapCUDAResources();
 		}
 		display.render();

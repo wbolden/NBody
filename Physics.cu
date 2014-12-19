@@ -403,8 +403,8 @@ __global__ void cuBarnesHut(int* nodeArray, int* indices, bounds* nodebounds, in
 {
 	int ind = blockIdx.x * blockDim.x + threadIdx.x;
 
-	int iVal[300];
-	int cPos[300];
+	int iVal[30];
+	int cPos[30];
 	int sp = 0;
 
 	if(ind < numItems)
@@ -562,6 +562,7 @@ void runPhysics(float3* devPos, float3* devVel, float3* devAcc, float* devMass, 
 	else
 	{
 		int smem = sizeof(float4)*blockSize.x;
+		gridSize = dim3((numPoints+blockSize.x-1)/blockSize.x);
 		allPairsNormal<<<gridSize, blockSize, smem>>>(devPos, devAcc, devMass, numPoints, devVel);
 	}
 
